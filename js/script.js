@@ -38,6 +38,48 @@ function getPoolSize(pwd) {
     return s;
 }
 
+// Crypto Tool Logic Models
+const alphaMap = "abcdefghijklmnopqrstuvwxyz0123456789 ".split("");
+// Updated with exactly 37 high-expression faces, monsters, and cool symbols
+const emojiMap = ["😀","😅","😂","🤣","😍","😛","🤪","🤓","😎","🥳","😏","🙄","😬","🤥","🤫","🤔","🤯","🤠","😈","👹","👺","🤡","👻","💀","👽","👾","🤖","🎃","😺","🚀","🛸","🔥","🍔","💎","💯","🍕","🌀"];
+
+function encryptBase64(text) {
+    try { return btoa(encodeURIComponent(text)); } 
+    catch (e) { return "Error: Invalid character set for Base64 standard."; }
+}
+function decryptBase64(text) {
+    try { return decodeURIComponent(atob(text.trim())); } 
+    catch (e) { return "Error: Output structure is not a valid Base64 string."; }
+}
+
+function encryptEmoji(text) {
+    let input = text.toLowerCase();
+    let result = "";
+    for (let char of input) {
+        let index = alphaMap.indexOf(char);
+        result += (index !== -1) ? emojiMap[index] : char;
+    }
+    return result;
+}
+function decryptEmoji(text) {
+    let result = "";
+    let tokens = text.match(/[\uD800-\uDBFF][\uDC00-\uDFFF]|./g) || [];
+    for (let token of tokens) {
+        let index = emojiMap.indexOf(token);
+        result += (index !== -1) ? alphaMap[index] : token;
+    }
+    return result;
+}
+
+function caesarCipher(text, shift) {
+    return text.split('').map(char => {
+        let code = char.charCodeAt(0);
+        if (code >= 65 && code <= 90) return String.fromCharCode(((code - 65 + shift) % 26) + 65);
+        if (code >= 97 && code <= 122) return String.fromCharCode(((code - 97 + shift) % 26) + 97);
+        return char;
+    }).join('');
+}
+
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { analyzeErgonomics, generateMutations, getPoolSize };
 }
@@ -47,12 +89,9 @@ if (typeof module !== 'undefined' && module.exports) {
 // ==========================================
 if (typeof window !== 'undefined') {
 
-    // PWA & EXTENSION UI LOGIC
+    // PWA UI LOGIC
     let deferredPrompt;
     const installPwaBtn = document.getElementById('install-pwa-btn');
-    const extensionModalBtn = document.getElementById('extension-modal-btn');
-    const extensionModal = document.getElementById('extension-modal');
-    const closeModalBtn = document.querySelector('.close-modal');
 
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
@@ -74,12 +113,6 @@ if (typeof window !== 'undefined') {
         if(installPwaBtn) installPwaBtn.classList.add('hidden');
         deferredPrompt = null;
     });
-
-    if(extensionModalBtn && extensionModal && closeModalBtn) {
-        extensionModalBtn.addEventListener('click', () => extensionModal.classList.remove('hidden'));
-        closeModalBtn.addEventListener('click', () => extensionModal.classList.add('hidden'));
-        window.addEventListener('click', (e) => { if (e.target === extensionModal) extensionModal.classList.add('hidden'); });
-    }
 
     // TAB SWITCHING LOGIC
     document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -326,45 +359,43 @@ if (typeof window !== 'undefined') {
         loadPreferences();
     }
 
-    // WEBAUTHN / PASSKEY DEMO
-    const passkeyBtn = document.getElementById('demo-passkey-btn');
-    const passkeyConsole = document.getElementById('passkey-console');
-    const passkeyLog = document.getElementById('passkey-log');
+    // CRYPTO TOOL LOGIC
+    const cipherInput = document.getElementById('cipher-input');
+    const cipherMode = document.getElementById('cipher-mode');
+    const cipherKey = document.getElementById('cipher-key');
+    const cipherOutput = document.getElementById('cipher-output');
+    const btnEncrypt = document.getElementById('btn-encrypt');
+    const btnDecrypt = document.getElementById('btn-decrypt');
 
-    if (passkeyBtn) {
-        passkeyBtn.addEventListener('click', async () => {
-            passkeyConsole.classList.remove('hidden');
-            passkeyLog.innerText = "Initializing WebAuthn Challenge...\nWaiting for user biometric verification...";
-
-            const publicKeyOptions = {
-                challenge: window.crypto.getRandomValues(new Uint8Array(32)),
-                rp: { name: "VaultMetrics App", id: window.location.hostname || "localhost" },
-                user: {
-                    id: window.crypto.getRandomValues(new Uint8Array(16)),
-                    name: "demo@vaultmetrics.app",
-                    displayName: "VaultMetrics Demo User"
-                },
-                pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }],
-                authenticatorSelection: {
-                    authenticatorAttachment: "platform", 
-                    userVerification: "required"
-                },
-                timeout: 60000,
-                attestation: "none"
-            };
-
-            try {
-                const credential = await navigator.credentials.create({ publicKey: publicKeyOptions });
-                const rawId = Array.from(new Uint8Array(credential.rawId)).map(b => b.toString(16).padStart(2,'0')).join('');
-                
-                passkeyLog.innerHTML = `<span style="color: var(--strong);">[SUCCESS]</span> Passkey Created!\n\n` +
-                                       `<strong>Credential ID:</strong>\n${rawId}\n\n` +
-                                       `<strong>Type:</strong> ${credential.type}\n` + 
-                                       `<strong>Authenticator Attached:</strong> True\n\n` +
-                                       `<span style="color: var(--text-secondary);">Your private key remains securely locked in your device's hardware enclave. Only the public key was shared.</span>`;
-            } catch (error) {
-                passkeyLog.innerHTML = `<span style="color: var(--danger);">[ABORTED]</span>\nError: ${error.message}\n\nDid you cancel the biometric prompt, or is WebAuthn unsupported on this specific browser/environment?`;
+    if (btnEncrypt && btnDecrypt) {
+        btnEncrypt.addEventListener('click', () => {
+            const input = cipherInput.value;
+            const mode = cipherMode.value;
+            const key = parseInt(cipherKey.value) || 3;
+            
+            if (!input) {
+                cipherOutput.value = "Error: Input payload context cannot be blank.";
+                return;
             }
+
+            if (mode === "base64") cipherOutput.value = encryptBase64(input);
+            else if (mode === "emoji") cipherOutput.value = encryptEmoji(input);
+            else if (mode === "caesar") cipherOutput.value = caesarCipher(input, key);
+        });
+
+        btnDecrypt.addEventListener('click', () => {
+            const input = cipherInput.value;
+            const mode = cipherMode.value;
+            const key = parseInt(cipherKey.value) || 3;
+            
+            if (!input) {
+                cipherOutput.value = "Error: Input payload context cannot be blank.";
+                return;
+            }
+
+            if (mode === "base64") cipherOutput.value = decryptBase64(input);
+            else if (mode === "emoji") cipherOutput.value = decryptEmoji(input);
+            else if (mode === "caesar") cipherOutput.value = caesarCipher(input, 26 - (key % 26)); // Reverse shift mapping
         });
     }
 }

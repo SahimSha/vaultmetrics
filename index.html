@@ -17,18 +17,17 @@
     <main class="container" role="main">
         <header>
             <h1 tabindex="0"><i class="fa-solid fa-shield-halved" style="color: var(--accent); margin-right: 10px;"></i>VaultMetrics</h1>
-            <p tabindex="0">Auditing, Generation and WebAuthn.</p>
+            <p tabindex="0">Auditing, Generation and Cryptography.</p>
         </header>
 
         <div class="utility-bar">
             <button id="install-pwa-btn" class="utility-btn hidden"><i class="fa-solid fa-download"></i> Install Desktop App</button>
-            <button id="extension-modal-btn" class="utility-btn"><i class="fa-brands fa-chrome"></i> Get Chrome Extension</button>
         </div>
 
         <nav class="tabs" aria-label="Tool Selection">
             <button class="tab-btn active" data-target="analyze" aria-selected="true">Analyzer</button>
             <button class="tab-btn" data-target="generate" aria-selected="false">Generator</button>
-            <button class="tab-btn passkey-tab" data-target="passkey" aria-selected="false">Passkeys</button>
+            <button class="tab-btn" data-target="cipher" aria-selected="false">Crypto Tool</button>
         </nav>
 
         <div id="section-analyze" class="section-content" role="tabpanel">
@@ -113,41 +112,53 @@
             <button id="generate-btn" class="primary-btn">Generate Secure Credential</button>
         </div>
 
-        <div id="section-passkey" class="section-content hidden" role="tabpanel">
+        <div id="section-cipher" class="section-content hidden" role="tabpanel">
             <div class="passkey-hero">
-                <i class="fa-solid fa-fingerprint passkey-icon"></i>
-                <h2>The Future is Passwordless</h2>
-                <p>Passkeys use your device's biometrics (FaceID, TouchID, Windows Hello) to create un-phishable, cryptographic credentials. No more passwords to remember.</p>
+                <i class="fa-solid fa-user-secret passkey-icon"></i>
+                <h2>Crypto Tool</h2>
+                <p>Locally encrypt and decrypt confidential text payloads using localized algorithmic layers.</p>
             </div>
             
-            <button id="demo-passkey-btn" class="primary-btn" style="background: #8b5cf6;">
-                <i class="fa-solid fa-plus"></i> Create Demo Passkey
-            </button>
-
-            <div id="passkey-console" class="console-output hidden">
-                <div class="console-header">WebAuthn API Handshake</div>
-                <pre id="passkey-log"></pre>
+            <div class="form-group" style="margin-top: 1.5rem; text-align: left;">
+                <label for="cipher-input" style="display:block; margin-bottom:0.5rem; color:var(--text-secondary); font-size: 0.9rem;">Input Message / Payload</label>
+                <textarea id="cipher-input" rows="3" placeholder="Enter plain text to encrypt or encrypted text to decrypt..." style="width:100%; padding:1rem; background:#1e293b; color:#fff; border:1px solid #334155; border-radius:8px; font-family:inherit; resize:vertical;"></textarea>
+            </div>
+            
+            <div class="form-group-row" style="display: flex; gap: 1rem; margin: 1.2rem 0; text-align: left;">
+                <div class="form-group" style="flex: 2;">
+                    <label for="cipher-mode" style="display:block; margin-bottom:0.5rem; color:var(--text-secondary); font-size: 0.9rem;">Cipher Method</label>
+                    <select id="cipher-mode" style="width: 100%; padding: 0.75rem; background: #1e293b; color: #fff; border: 1px solid #334155; border-radius: 6px; font-family:inherit;">
+                        <option value="base64">Hex / Base64 Scramble</option>
+                        <option value="emoji">Emoji Matrix Substitution</option>
+                        <option value="caesar">Caesar Shift Cipher</option>
+                    </select>
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label for="cipher-key" style="display:block; margin-bottom:0.5rem; color:var(--text-secondary); font-size: 0.9rem;">Shift Key (1-25)</label>
+                    <input type="number" id="cipher-key" value="3" min="1" max="25" style="width: 100%; padding: 0.75rem; background: #1e293b; color: #fff; border: 1px solid #334155; border-radius: 6px; font-family:inherit;">
+                </div>
+            </div>
+            
+            <div class="actions" style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+                <button id="btn-encrypt" class="primary-btn" style="flex: 1; background: var(--accent); color: #000; display:flex; align-items:center; justify-content:center; gap: 8px;">
+                    <i class="fa-solid fa-lock"></i> Encrypt
+                </button>
+                <button id="btn-decrypt" class="primary-btn" style="flex: 1; background: #334155; color: #fff; display:flex; align-items:center; justify-content:center; gap: 8px;">
+                    <i class="fa-solid fa-lock-open"></i> Decrypt
+                </button>
+            </div>
+            
+            <div class="form-group" style="text-align: left;">
+                <label for="cipher-output" style="display:block; margin-bottom:0.5rem; color:var(--text-secondary); font-size: 0.9rem;">Output Result</label>
+                <textarea id="cipher-output" rows="3" readonly placeholder="Your processed cryptographic output will materialize here..." style="width:100%; padding:1rem; background: #0f172a; border: 1px solid #1e293b; color: var(--accent); font-family: monospace; border-radius:8px; resize:vertical; outline: none;"></textarea>
             </div>
         </div>
+
         <footer class="app-footer">
             <p>&copy; 2026 Sahim Sha. All Rights Reserved.</p>
-            <p>Built with <i class="fa-solid fa-heart" style="color: var(--danger);"></i> using HTML5, CSS3, Vanilla JS & WebAuthn API</p>
+            <p>Built with <i class="fa-solid fa-heart" style="color: var(--danger);"></i> using HTML5, CSS3, Vanilla JS & Crypto API</p>
         </footer>
     </main>
-    
-    <div id="extension-modal" class="modal hidden">
-        <div class="modal-content">
-            <span class="close-modal"><i class="fa-solid fa-xmark"></i></span>
-            <h2><i class="fa-brands fa-chrome" style="color: #3b82f6;"></i> Install VaultMetrics Extension</h2>
-            <p>VaultMetrics is currently in Developer Preview. To install it in your browser, follow these quick steps:</p>
-            <ol class="install-steps">
-                <li>Open a new tab and navigate to <code>chrome://extensions/</code></li>
-                <li>Enable <strong>Developer mode</strong> using the toggle in the top right corner.</li>
-                <li>Click <strong>Load unpacked</strong> and select your <code>vaultmetrics</code> project folder.</li>
-            </ol>
-            <p class="modal-subtext">The VaultMetrics icon will now appear in your toolbar for instant access!</p>
-        </div>
-    </div>
 
     <script src="js/script.js"></script>
 </body>
